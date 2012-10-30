@@ -31,7 +31,7 @@ class ChirpXMLWriter(object):
         radio.setAttribute('version', '0.1.1')
         memories = xml.createElement('memories')
 
-        location_counter = 8
+        location_counter = 0
         repeaters_list = self.przemienniki.repeaters.values()
         repeaters_list = sorted(repeaters_list, key=lambda r: r['qra'])
         for repeater in repeaters_list:
