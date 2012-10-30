@@ -16,9 +16,14 @@ def main():
         print "Uzycie %s input.xml output.chirp" % (sys.argv[0])
         sys.exit(2)
 
+    try:
+        name_filter = sys.argv[3]
+    except IndexError:
+        name_filter = None
+
     przemienniki = PrzemiennikiXMLReader(input_filename)
     writer = ChirpXMLWriter(przemienniki)
-    writer.save(output_filename);
+    writer.save(output_filename, name_filter=name_filter)
 
 if __name__ == "__main__":
     main()
