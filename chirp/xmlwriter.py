@@ -26,7 +26,9 @@ class ChirpXMLWriter(object):
         memories = xml.createElement('memories')
 
         location_counter = 0
-        for repeater in self.przemienniki.repeaters.values():
+        repeaters_list = self.przemienniki.repeaters.values()
+        repeaters_list = sorted(repeaters_list, key=lambda r: r['qra'])
+        for repeater in repeaters_list:
 
             if not include_inactive and repeater['status']['name'] != 'WORKING':
                 continue
