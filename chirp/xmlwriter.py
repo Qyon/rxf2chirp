@@ -3,6 +3,7 @@ __author__ = 'Qyon'
 
 from xml.dom import minidom
 from xml.dom.minidom import Element, Document
+import re
 
 class ChirpXMLWriter(object):
     """
@@ -14,10 +15,17 @@ class ChirpXMLWriter(object):
         """
         self.przemienniki = przemienniki
 
-    def save(self, filename, include_inactive=False):
+    def save(self, filename, include_inactive=False, name_filter=None):
         """
         :type filename: str
         """
+        print name_filter
+        if name_filter:
+            name_filter = name_filter.replace('?', '([\w]+)')
+            name_filter = name_filter.replace('*', '(.*)')
+            name_filter = re.compile(name_filter)
+            print name_filter
+
         xml = minidom.getDOMImplementation().createDocument(None, 'radio', None)
         assert isinstance(xml, Document)
         radio = xml.getElementsByTagName('radio')[0]
@@ -31,6 +39,8 @@ class ChirpXMLWriter(object):
         for repeater in repeaters_list:
 
             if not include_inactive and repeater['status']['name'] != 'WORKING':
+                continue
+            if name_filter and not re.match(name_filter, repeater['qra']):
                 continue
 
             memory = xml.createElement('memory')
