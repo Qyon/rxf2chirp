@@ -2,7 +2,7 @@ __author__ = 'Qyon'
 # -*- coding: utf-8 -*-
 
 from xml.dom import minidom
-from xml.dom.minicompat import NodeList
+from xml.dom.minidom import Element
 
 class PrzemiennikiXMLReader(object):
     """
@@ -19,15 +19,25 @@ class PrzemiennikiXMLReader(object):
         self._read_dictionary()
         self._read_repeaters()
 
-    def _getNodeValue(self, element, node_name):
+    def _getNodeValue(self, parent_element, node_name):
         """
         Odczytaj zawartość textnoda zawartego w podanym elemencie
         :type element: xml.dom.minidom.Element
         :type node_name: str
         """
-        type_element = element.getElementsByTagName(node_name)[0]
-        item_type = type_element.firstChild.nodeValue
-        return item_type
+        elements = parent_element.getElementsByTagName(node_name)
+        if len(elements) == 1:
+            child_element = elements[0]
+            element_value = child_element.firstChild.nodeValue
+        elif len(elements) > 1:
+            element_value = []
+            for element in elements:
+                val = dict([ (a_name, a_value.nodeValue) for (a_name,a_value) in element._attrs.items() ])
+                val['value'] = element.firstChild.nodeValue
+                element_value.append(val)
+        else:
+            element_value = None
+        return element_value
 
     def _read_dictionary(self):
         """
@@ -50,11 +60,12 @@ class PrzemiennikiXMLReader(object):
         """
         repeaters = self.dom.getElementsByTagName('repeaters')[0].getElementsByTagName('repeater')
         self.repeaters = {}
-
+        repeaters_cnt = 0
         for repeater in repeaters:
             repeater_id = self._getNodeValue(repeater, 'id')
             node_data = dict([(node_name, self._getNodeValue(repeater, node_name)) for node_name in
-                              ('qra', 'statusInt', 'modeInt', 'bandInt', 'country', 'qth', 'activationInt')])
+                              ('qra', 'statusInt', 'modeInt', 'bandInt', 'country', 'qth', 'activationInt', 'qrg')])
+            
             try:
                 for node_name in ('statusInt', 'modeInt', 'bandInt', 'activationInt'):
                     node_name_real = node_name[:-3]
@@ -63,3 +74,5 @@ class PrzemiennikiXMLReader(object):
             except KeyError:
                 # są w xmlu przemienniki których *Int pole nie ma odwzorowania w słowniku...
                 continue
+
+            repeaters_cnt += 1
