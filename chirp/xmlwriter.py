@@ -35,7 +35,6 @@ class ChirpXMLWriter(object):
         repeaters_list = self.przemienniki.repeaters.values()
         repeaters_list = sorted(repeaters_list, key=lambda r: r['qra'])
         for repeater in repeaters_list:
-
             if not include_inactive and repeater['status']['name'] != 'WORKING':
                 continue
             if name_filter and not re.match(name_filter, repeater['qra']):
@@ -55,11 +54,14 @@ class ChirpXMLWriter(object):
 
             frequency = xml.createElement('frequency')
             qrgs = repeater['qrg']
-            freq = '0'
+            tx_freq = '0'
+            rx_freq = '0'
             for qrg in qrgs:
-                if qrg['type'] == 'rx':
-                    freq = qrg['value']
-            frequency.appendChild(xml.createTextNode(freq))
+                if qrg['type'] == 'tx':
+                    tx_freq = qrg['value']
+                elif qrg['type'] == 'rx':
+                    rx_freq = qrg['value']
+            frequency.appendChild(xml.createTextNode(tx_freq))
             frequency.setAttribute('units', 'MHz')
             memory.appendChild(frequency)
 
@@ -89,14 +91,22 @@ class ChirpXMLWriter(object):
             squelchSetting = xml.createElement('squelchSetting')
             memory.appendChild(squelchSetting)
 
+            offset_value = float(rx_freq) - float(tx_freq)
+
             duplex = xml.createElement('duplex')
-            duplex.appendChild(xml.createTextNode('none'))
+            if offset_value < 0:
+                duplex_value = 'negative'
+            else:
+                duplex_value = 'positive'
+            duplex.appendChild(xml.createTextNode(duplex_value))
             memory.appendChild(duplex)
 
             offset = xml.createElement('offset')
             offset.setAttribute('units', 'MHz')
-            offset.appendChild(xml.createTextNode('0.0'))
+
+            offset.appendChild(xml.createTextNode(str(abs(offset_value))))
             memory.appendChild(offset)
+
 
             mode = xml.createElement('mode')
             #mode.appendChild(xml.createTextNode(repeater['mode']['name']))
@@ -104,16 +114,12 @@ class ChirpXMLWriter(object):
             memory.appendChild(mode)
             #end stubs
 
-
-
             #stubs
             tuningStep = xml.createElement('tuningStep')
             tuningStep.setAttribute('units', 'kHz')
             tuningStep.appendChild(xml.createTextNode('1.0'))
             memory.appendChild(tuningStep)
             #end stubs
-
-
 
             memories.appendChild(memory)
             location_counter += 1
