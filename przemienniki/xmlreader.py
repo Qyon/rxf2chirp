@@ -4,6 +4,7 @@ __author__ = 'Qyon'
 from xml.dom import minidom
 from xml.dom.minidom import Element
 
+
 class PrzemiennikiXMLReader(object):
     """
         Klasa odczytująca przemienniki z pliku XML
@@ -32,7 +33,7 @@ class PrzemiennikiXMLReader(object):
         elif len(elements) > 1:
             element_value = []
             for element in elements:
-                val = dict([ (a_name, a_value.nodeValue) for (a_name,a_value) in element._attrs.items() ])
+                val = dict([(a_name, a_value.nodeValue) for (a_name, a_value) in element._attrs.items()])
                 val['value'] = element.firstChild.nodeValue
                 element_value.append(val)
         else:
@@ -62,17 +63,22 @@ class PrzemiennikiXMLReader(object):
         self.repeaters = {}
         repeaters_cnt = 0
         for repeater in repeaters:
-            repeater_id = self._getNodeValue(repeater, 'id')
-            node_data = dict([(node_name, self._getNodeValue(repeater, node_name)) for node_name in
-                              ('qra', 'statusInt', 'modeInt', 'bandInt', 'country', 'qth', 'activationInt', 'qrg')])
-            
             try:
-                for node_name in ('statusInt', 'modeInt', 'bandInt', 'activationInt'):
-                    node_name_real = node_name[:-3]
-                    node_data[node_name_real] = self.dictionary[node_name_real][node_data[node_name]]
-                self.repeaters[repeater_id] = node_data
-            except KeyError:
-                # są w xmlu przemienniki których *Int pole nie ma odwzorowania w słowniku...
-                continue
+                repeater_id = self._getNodeValue(repeater, 'id')
+                node_data = dict([(node_name, self._getNodeValue(repeater, node_name)) for node_name in
+                                  ('qra', 'statusInt', 'modeInt', 'bandInt', 'country', 'qth', 'activationInt', 'qrg', 'ctcss')])
 
-            repeaters_cnt += 1
+                try:
+                    for node_name in ('statusInt', 'modeInt', 'bandInt', 'activationInt'):
+                        node_name_real = node_name[:-3]
+                        #			<ctcss type="rx">127.3</ctcss>
+                        #           <ctcss type="tx">127.3</ctcss>
+                        node_data[node_name_real] = self.dictionary[node_name_real][node_data[node_name]]
+                    self.repeaters[repeater_id] = node_data
+                except KeyError:
+                    # są w xmlu przemienniki których *Int pole nie ma odwzorowania w słowniku...
+                    continue
+
+                repeaters_cnt += 1
+            except Exception as e:
+                print e

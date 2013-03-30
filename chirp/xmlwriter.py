@@ -65,7 +65,7 @@ class ChirpXMLWriter(object):
             frequency.setAttribute('units', 'MHz')
             memory.appendChild(frequency)
 
-
+            has_tx_tone = False
             #stubs
             for i in (('rtone', 'repeater'), ('ctone', 'ctcss'), ('dtcs', 'dtcs'), ):
                 squelch = xml.createElement('squelch')
@@ -74,7 +74,22 @@ class ChirpXMLWriter(object):
 
                 if i[0] != 'dtcs':
                     tone = xml.createElement('tone')
-                    tone.appendChild(xml.createTextNode('88.5'))
+                    tone_freq = '88.5'
+                    if repeater.get('ctcss'):
+                        if type(repeater['ctcss']) is list:
+                            for x in repeater['ctcss']:
+
+                                    if x['type'] == 'rx' and i[0] == 'rtone':
+                                        tone_freq = x['value']
+                                        break
+                                    if x['type'] == 'tx' and i[0] == 'ctone':
+                                        tone_freq = x['value']
+                                        has_tx_tone = True
+                                        break
+                        else:
+                            tone_freq = str(repeater['ctcss'])
+
+                    tone.appendChild(xml.createTextNode(tone_freq))
                     squelch.appendChild(tone)
                 else:
                     code = xml.createElement('code')
@@ -89,6 +104,9 @@ class ChirpXMLWriter(object):
                 memory.appendChild(squelch)
 
             squelchSetting = xml.createElement('squelchSetting')
+            if repeater.get('activation'):
+                if repeater['activation']['name'] == u'CTCSS':
+                    squelchSetting.appendChild(xml.createTextNode(('ctone','rtone')[has_tx_tone]))
             memory.appendChild(squelchSetting)
 
             offset_value = float(rx_freq) - float(tx_freq)
